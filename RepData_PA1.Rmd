@@ -1,0 +1,107 @@
+---
+title: 'Reproducible Research: Peer Assessment 1'
+output: 
+  html_document:
+    keep_md: yes
+  pdf_document: default
+---
+**Yongdan Tang**
+
+
+*Global Option is set as echo = TRUE so all codes should be visible. Results are shown in markup brackets so they can be differentiated as well.* 
+
+```{r setoptions, echo=TRUE}
+require(knitr)
+opts_chunk$set(echo = TRUE, results = "markup")
+```
+
+
+## Loading and preprocessing the data
+1. set working directory properly
+2. download the file from the coursera source url *the url need to be http instead of https*
+3. unzip the file into the same directory and read it into R as a temp data.frame
+4. format this temp data.frame as tbl_df using dplyr package for following use
+5. this dataset has  17,568 observations and 3 variables
+
+```{r loading_and_preparing_data}
+wd_url <- "C:/Users/Yong/RepData_Assessment1/RepData_PeerAssessment1"
+setwd(wd_url)
+
+download.file("http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", "activity.zip")
+unzip("activity.zip")
+temp <- read.csv(file = "activity.csv", na.strings = "NA")
+
+library(dplyr)
+temp <- tbl_df(temp)
+temp$date <- as.Date(temp$date)
+print(temp)
+
+```
+
+
+## What is mean total number of steps taken per day?
+For this part of the assignment, ignore the missing values in the dataset.
+
+1. Calculate the total number of steps taken per day. Group the dataset by date, then use summarise() function to calculate the total steps per day. 
+2. Plot the histogram of total steps per day using hist() funciton
+3. Calculate and report the mean and median of the total number of steps taken per day and report them afterwards
+
+
+```{r calculate_steps_taken_per_day}
+
+per_day_steps <- summarise(group_by(temp, date), 
+                           steps = sum(steps, na.rm = TRUE))
+
+with(per_day_steps, hist(steps,
+                         main = "Histogram of total number of steps taken per day", 
+                         xlab = "steps"
+                         ))
+
+mean_steps <- mean(per_day_steps$steps, na.rm = TRUE)
+
+median_steps <- median(per_day_steps$steps, na.rm = TRUE)
+
+print(mean_steps)
+print(median_steps)
+
+```
+
+**The mean total steps taken per day is `r mean_steps`.**
+**The median total steps taken per day is `r median_steps`.**
+
+## What is the average daily activity pattern?
+
+1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+- make another factor variable called "time" as we know the 5-minute interval represents certain time in a day
+- Calculate the averaged numbers of steps taken averaged across all days for the 5-minute interval using summarise() function group the steps by time
+- Plot time-series steps using base plotting system. *since time is a factor variable, plot() function will call plot.factor() function which results in a scatter plot. calling lines() function again to connect the dots.*
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+- use the filter() function to extract the row which contains the maximum steps
+- print the max result
+
+```{r average_daily_pattern}
+temp$time <- as.factor(temp$interval)
+per_interval_avg_steps <- summarise(group_by(temp, time),
+                                    steps = mean(steps, na.rm = TRUE))
+
+
+with(per_interval_avg_steps, plot(time, 
+                                  steps, 
+                                  type = "n",
+                                  main = "Averaged steps taken (acrossed all days) per 5 minute interval",
+                                  xlab = "time",
+                                  ylab = "steps"))
+with(per_interval_avg_steps, lines(time, steps))
+
+max <- filter(per_interval_avg_steps, steps == max(steps))
+print(max)
+```
+**On average across all the days in the dataset, the 5-minute interval that contains the maximum number of steps is `r max$time`.**
+**The 5-minute interval `r max$time` contains `r max$steps` of steps.**
+
+
+## Imputing missing values
+
+
+## Are there differences in activity patterns between weekdays and weekends?
